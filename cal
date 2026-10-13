@@ -1,0 +1,9 @@
+% Characteristic equation: s^3 + 12*s^2 + 20*s + 200 = 0
+poly_coeffs = [1, 12, 20, 200];
+p = roots(poly_coeffs);
+
+disp('Closed-loop poles:');
+disp(p);
+
+
+
