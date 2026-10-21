@@ -1,52 +1,85 @@
-clear; clc; close all;
-
-K = 200;
+clc;
+clear;
+close all;
 s = tf('s');
-G = K / (s * (s + 2) * (s + 10));
 
-OS = 0.20;
-zeta = sqrt((log(OS))^2 / (pi^2 + (log(OS))^2));
-PM_req = atan(2 * zeta / sqrt(sqrt(1 + 4*zeta^2) - 2*zeta^2)) * (180/pi);
+G = 200/(s*(s+2)*(s+10));
 
-PM_des = PM_req + 6;
-target_phase = -180 + PM_des;
+Kv = dcgain(s*G)
 
-w = logspace(-2, 3, 5000);
-[mag, phase] = bode(G, w);
+zeta = -log(0.2)/sqrt(pi^2 + log(0.2)^2);
+PM = atan(2*zeta/sqrt(sqrt(1+4*zeta^4)-2*zeta^2))*180/pi
+
+figure;
+margin(G);
+grid on;
+
+w = logspace(-2,3,10000);
+[mag,phase] = bode(G,w);
 mag = squeeze(mag);
 phase = squeeze(phase);
 
-[~, idx] = min(abs(phase - target_phase));
-w_gc_new = w(idx);
-mag_at_w_gc = mag(idx);
-
-beta = mag_at_w_gc;
-w_z = 0.1 * w_gc_new;
-w_p = w_z / beta;
-
-D_lag = (1 + s / w_z) / (1 + s / w_p);
-G_comp = D_lag * G;
-
-[Gm, Pm, Wcg, Wcp] = margin(G_comp);
-Gm_dB = 20 * log10(Gm);
-
-T_comp = feedback(G_comp, 1);
-[r, p, ~] = residue(T_comp.Numerator{1}, T_comp.Denominator{1});
-
-beta
-w_z
-w_p
-Pm
-Gm_dB
-p
-r
+PM_req = PM + 10;
+phase_req = -180 + PM_req;
 
 figure;
-subplot(2, 1, 1);
-bode(G, D_lag, G_comp);
-legend('G', 'D', 'G_{comp}');
+subplot(2,1,1);
+semilogx(w,20*log10(mag));
 grid on;
 
-subplot(2, 1, 2);
-step(T_comp);
+
+subplot(2,1,2);
+semilogx(w,phase);
+hold on;
+
 grid on;
+w_new = 0.64;
+M_dB = 23.7;
+beta = 10^(M_dB/20);
+
+wz = w_new/4;
+wp = wz/beta;
+
+wz = w_new/4;
+wp = wz/beta;
+
+Gc = (s/wz+1)/(s/wp+1);
+Gf = G*Gc;
+
+figure;
+bode(G,Gc,Gf);
+grid on;
+legend('Uncompensated','Lag compensator','Compensated');
+
+[GM,PM1,Wcg,Wcp] = margin(Gf);
+GM_dB = 20*log10(GM)
+
+figure;
+margin(Gf);
+grid on;
+
+Tf = feedback(Gf,1);
+
+figure;
+step(Tf);
+grid on;
+
+figure;
+bode(Tf);
+grid on;
+
+stepinfo(Tf)
+
+Kv_comp = dcgain(s*Gf)
+
+[num,den] = tfdata(Tf,'v');
+num_step = num;
+den_step = conv(den,[1 0]);
+[r,p,k] = residue(num_step,den_step)
+
+
+disp(r);
+
+disp(p);
+
+disp(k);
