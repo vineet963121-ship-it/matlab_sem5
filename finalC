@@ -44,7 +44,8 @@ bode(Tf);
 grid on;
 stepinfo(Tf)
 
-[num,den] = tfdata(Tf,'v');
+
+sf = Tf*(1/s);
+[num,den] = tfdata(sf,'v');
 [r,p,k] = residue(num,den);
-den_step = conv(den,[1 0]);
-six_roots = roots(den_step)
+
