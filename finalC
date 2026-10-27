@@ -1,0 +1,50 @@
+clc;
+clear;
+close all;
+s = tf('s');
+Gc = (1 + 0.410*s)/(1 + 0.0567*s);
+
+G1 = 200/(s*(s+2)*(s+10));
+G = Gc*G1;
+Kv = dcgain(s*G)
+zeta = -log(0.2)/sqrt(pi^2 + log(0.2)^2);
+PM = atan(2*zeta/sqrt(sqrt(1+4*zeta^4)-2*zeta^2))*180/pi;
+figure;
+margin(G);
+grid on;
+w = logspace(-2,3,10000);
+[mag,phase] = bode(G,w);
+mag = mag(:);
+phase = phase(:);
+PM_req = PM + 15;
+phase_req = -180 + PM_req;
+grid on;
+w_new = 2.18; %(got the value from the bode plot of the G by seeing at whatfrequency the phase is 116.8523)
+M_dB = 11.5;
+beta = 10^(M_dB/20);
+wz = w_new/4;
+wp = wz/beta;
+Gc = (s/wz + 1)/(s/wp + 1);
+Gf = G*Gc;
+figure;
+bode(G,Gc,Gf);
+grid on;
+legend('Uncompensated','Lag compensator','Compensated');
+[GM,PM1,Wcg,Wcp] = margin(Gf);
+GM_dB = 20*log10(GM)
+figure;
+margin(Gf);
+grid on;
+Tf = feedback(Gf,1);
+figure;
+step(Tf);
+grid on;
+figure;
+bode(Tf);
+grid on;
+stepinfo(Tf)
+
+[num,den] = tfdata(Tf,'v');
+[r,p,k] = residue(num,den);
+den_step = conv(den,[1 0]);
+six_roots = roots(den_step)
