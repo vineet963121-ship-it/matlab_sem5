@@ -1,0 +1,77 @@
+
+clc;
+clear;
+close all;
+
+s = tf('s');
+
+G1 = 1/(s*(s+2)*(s+10));
+
+K = 200;
+G = K*G1;
+
+Kv = dcgain(s*G)
+
+zeta = -log(0.2)/sqrt(pi^2 + log(0.2)^2);
+
+PM_req = atan(2*zeta/sqrt(sqrt(1+4*zeta^4)-2*zeta^2))*180/pi;
+
+figure;
+margin(G);
+grid on;
+
+[GM,PM1,Wcg,Wcp] = margin(G);
+GM_dB = 20*log10(GM)
+
+
+PM_uncomp = 3.94;
+
+phi_m = PM_req - PM_uncomp + 5;
+
+alpha = (1-sind(phi_m))/(1+sind(phi_m));
+
+M_dB =20*log10(1/sqrt(alpha));
+
+
+w_new = 5.64; 
+
+wm = w_new;
+
+wz = wm*sqrt(alpha);
+wp = wm/sqrt(alpha);
+
+Gc = (1+s/wz)/(1+s/wp);
+
+Gf = G*Gc;
+
+figure;
+bode(G,Gc,Gf);
+grid on;
+legend('Uncompensated','Lead compensator','Compensated');
+
+[GM,PM1,Wcg,Wcp] = margin(Gf);
+GM_dB = 20*log10(GM)
+
+figure;
+margin(Gf);
+grid on;
+
+
+Tf = feedback(Gf,1);
+
+figure;
+step(Tf);
+grid on;
+
+stepinfo(Tf)
+
+figure;
+bode(Tf);
+grid on;
+
+[num,den] = tfdata(Tf,'v');
+
+[r,p,k] = residue(num,den);
+
+den_step = conv(den,[1 0]);
+five_roots = roots(den_step)
