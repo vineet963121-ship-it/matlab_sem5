@@ -68,10 +68,6 @@ stepinfo(Tf)
 figure;
 bode(Tf);
 grid on;
-
-[num,den] = tfdata(Tf,'v');
-
+sf = Tf*(1/s);
+[num,den] = tfdata(sf,'v');
 [r,p,k] = residue(num,den);
-
-den_step = conv(den,[1 0]);
-five_roots = roots(den_step)
